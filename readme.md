@@ -1,9 +1,12 @@
-# How authentication works
-
-- Initially, we send the email address to the backend. The backend then sends a request to Stytch, which in turn sends an email to our mailbox.
+- First we send the mail address to backend and in backend it send a mail to stytch. and stytch send us mail to our mailbox
 
 ```jsx
-axios.post('<http://localhost:5000/login>', { email }).then((response) => {
+const client = new stytch.Client({
+  project_id: 'project-test-2901c788-fc6d-435a-9d0c-c13444601c89',
+  secret: 'secret-test-UD3Y4GPVAt9e0QIGaZsyYJLjFjWc7hCMiRg=',
+});
+
+axios.post('http://localhost:5000/login', { email }).then((response) => {
   console.log(response);
 });
 
@@ -12,8 +15,8 @@ app.post('/login', async (req, res) => {
 
   const params = {
     email,
-    login_magic_link_url: '<http://localhost:3000/authenticate>',
-    signup_magic_link_url: '<http://localhost:3000/authenticate>',
+    login_magic_link_url: 'http://localhost:3000/authenticate',
+    signup_magic_link_url: 'http://localhost:3000/authenticate',
   };
   try {
     const response = await client.magicLinks.email.loginOrCreate(params);
@@ -24,7 +27,7 @@ app.post('/login', async (req, res) => {
 });
 ```
 
-- Next, we authenticate with the token we received and send a request with that token. This returns a sessionToken.
+- then we authenticate with the token we got , and send a requst with theat token and it turn back us a sessionToken.
 
 ```jsx
 app.post('/authenticate', async (req, res) => {
@@ -42,12 +45,12 @@ app.post('/authenticate', async (req, res) => {
 });
 ```
 
-- We then set the token in the header. For each request that needs to be authenticated, we set the session-cookie in the header.
+- we set the token in header .then in each our request that need to be authenticate we set the session-cookie in the header
 
 ```jsx
 useEffect(() => {
     axios
-      .post('<http://localhost:5000/authenticate>', {
+      .post('http://localhost:5000/authenticate', {
         login_token: token,
       })
       .then((response) => {
@@ -57,4 +60,29 @@ useEffect(() => {
 
 ```
 
-- In a route that requires authentication, we check it using middleware and that cookie.
+in a root need to be auth we check it on middleware using that cookie
+
+```jsx
+const authMiddleware = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  const sessionToken = req.headers.session_token as string;
+
+  if (!sessionToken) {
+    return res.status(400).send({ error: 'Session token is required' });
+  }
+
+  try {
+    await client.sessions.authenticate({ session_token: sessionToken });
+    next();
+  } catch (error) {
+    res.status(400).send(error);
+  }
+};
+
+app.get('/test', authMiddleware, (req, res) => {
+  res.send('You are authenticated');
+});
+```
