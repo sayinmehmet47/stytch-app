@@ -1,4 +1,4 @@
-- First we send the mail address to backend and in backend it send a mail to stytch. and stytch send us mail to our mailbox
+- First, the user's email address is sent to the backend. The backend then sends an email to Stytch, which in turn sends a magic link to the user's email address.
 
 ```jsx
 const client = new stytch.Client({
@@ -45,7 +45,7 @@ app.post('/authenticate', async (req, res) => {
 });
 ```
 
-- we set the token in header .then in each our request that need to be authenticate we set the session-cookie in the header
+- We set the session token in the request header. For each subsequent request that requires authentication, we include this session token in the header as a 'session-cookie'. This allows the server to validate the session and ensure the user is authenticated.
 
 ```jsx
 useEffect(() => {
@@ -60,7 +60,7 @@ useEffect(() => {
 
 ```
 
-in a root need to be auth we check it on middleware using that cookie
+For routes that require authentication, we utilize middleware to verify the session. This is done by checking the 'session-cookie' in the request header, which was set during the authentication process.
 
 ```jsx
 const authMiddleware = async (
